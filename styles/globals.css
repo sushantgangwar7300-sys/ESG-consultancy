@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-forest: #0F3A2E;
+  --primary-emerald: #16A34A;
+}
+
+body {
+  background-color: #FAFAFA;
+  color: #0F172A;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
