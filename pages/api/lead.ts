@@ -1,18 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
-import path from 'path';
-
-type LeadData = {
-  fullName: string;
-  email: string;
-  company?: string;
-  phone?: string;
-  servicePillar: string;
-  message?: string;
-  readinessScore?: number;
-  submittedAt?: string;
-  ticketId?: string;
-};
+import { saveLead, LeadRecord } from '@/lib/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -27,7 +14,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const ticketId = `KP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const newLead: LeadData = {
+    const newLead: LeadRecord = {
+      ticketId,
       fullName,
       email,
       company: company || 'Not specified',
@@ -35,32 +23,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       servicePillar: servicePillar || 'General Scoping',
       message: message || '',
       readinessScore: readinessScore ?? undefined,
-      submittedAt: new Date().toISOString(),
-      ticketId
+      submittedAt: new Date().toISOString()
     };
 
-    const dataDir = path.join(process.cwd(), 'data');
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
-
-    const filePath = path.join(dataDir, 'leads.json');
-    let leads: LeadData[] = [];
-    if (fs.existsSync(filePath)) {
-      const fileData = fs.readFileSync(filePath, 'utf-8');
-      try {
-        leads = JSON.parse(fileData);
-      } catch {
-        leads = [];
-      }
-    }
-
-    leads.unshift(newLead);
-    fs.writeFileSync(filePath, JSON.stringify(leads, null, 2), 'utf-8');
+    const { success, storageType } = await saveLead(newLead);
 
     return res.status(200).json({
-      success: true,
+      success,
       ticketId,
+      storage: storageType,
       message: 'Scoping inquiry logged successfully. Lead auditor notified.'
     });
   } catch (error) {
